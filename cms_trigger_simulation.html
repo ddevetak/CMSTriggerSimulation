@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CMS Data Collection Simulation</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+    }
+    canvas {
+      background: white;
+      display: block;
+      margin: auto;
+      border: none;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+    }
+    h1 {
+      color: #222;
+      font-size: 28px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    .description {
+      text-align: center;
+      font-size: 16px;
+      color: #444;
+      max-width: 900px;
+      margin: auto;
+      padding-bottom: 15px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <h1>CMS Data Collection Simulation</h1>
+  <p class="description">
+    This simulation visualizes how the
+    <strong style="color:#c00;">CMS Level-1 Trigger (L1T)</strong> and
+    <strong style="color:#f90;">High-Level Trigger (HLT)</strong> process collision events in
+    <strong>bunches</strong>. The <strong style="color:#0a0;">Offline Processing stage</strong> reconstructs
+    meaningful physics objects from raw data.
+  </p>
+  <canvas id="cmsCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById("cmsCanvas");
+    const ctx = canvas.getContext("2d");
+    // Increase overall canvas width and height
+    canvas.width = 1200;
+    canvas.height = 600;
+
+    let imageLoaded = false;
+
+    // Load a CMS Detector image
+    const detectorImg = new Image();
+    detectorImg.src = "https://img.lovepik.com/png/20231104/light-beam-collision-texture-light-effect-halo-Light_484064_wh1200.png";
+    detectorImg.onload = function () {
+      imageLoaded = true;
+      startBunchEmission();
+    };
+    detectorImg.onerror = function () {
+      console.error("Failed to load CMS Detector image.");
+    };
+
+    // Define the phase boxes with properties for the colored (big) boxes,
+    // text for the grey (small) boxes, and an additional phase description.
+    const PHASES = [
+      {
+        x: 300,
+        y: 100,
+        width: 200,        // Increased width
+        height: 200,
+        color: "rgba(255, 0, 0, 0.2)",
+        title: "L1 Trigger",
+        desc: "40 MHz → 100 kHz",
+        smallBoxText: "Binary Hits Only",
+        phaseDesc: "Captures raw binary data from detectors."
+      },
+      {
+        x: 550,
+        y: 100,
+        width: 200,        // Increased width
+        height: 200,
+        color: "rgba(255, 165, 0, 0.2)",
+        title: "HLT",
+        desc: "Software Filtering",
+        smallBoxText: "Tracks & Clusters Identified",
+        phaseDesc: "Filters events using software algorithms."
+      },
+      {
+        x: 800,
+        y: 100,
+        width: 200,        // Increased width
+        height: 200,
+        color: "rgba(0, 128, 0, 0.2)",
+        title: "Offline Processing",
+        desc: "Physics Object Reconstruction",
+        smallBoxText: "Reconstructed Physics Objects",
+        phaseDesc: "Reconstructs detailed physics objects for analysis."
+      }
+    ];
+
+    let particles = [];
+
+    function emitParticleBunch() {
+      for (let i = 0; i < 30; i++) {
+        particles.push(createParticle());
+      }
+    }
+
+    function startBunchEmission() {
+      emitParticleBunch();
+      setInterval(emitParticleBunch, 1000);
+    }
+
+    function createParticle() {
+      return {
+        x: 120,
+        y: 150 + Math.random() * 120,
+        radius: 5,
+        speed: 2.5 + Math.random() * 2.0,
+        energy: Math.random() * 100,
+        opacity: 1.0
+      };
+    }
+
+    function drawPhases() {
+      PHASES.forEach((phase) => {
+        // Draw the main colored phase box
+        ctx.fillStyle = phase.color;
+        ctx.fillRect(phase.x, phase.y, phase.width, phase.height);
+
+        // Draw the phase title and description on the colored box
+        ctx.fillStyle = "black";
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillText(phase.title, phase.x + phase.width / 2, phase.y + 10);
+
+        ctx.font = "14px Arial";
+        ctx.fillText(phase.desc, phase.x + phase.width / 2, phase.y + 35);
+
+        // Calculate position for the grey box (small box) directly below the colored box
+        const marginTop = 15; // space between the colored box and the grey box
+        const greyBoxWidth = 200;  // increased width to match colored box
+        const greyBoxHeight = 100;
+        const greyX = phase.x + (phase.width - greyBoxWidth) / 2;
+        const greyY = phase.y + phase.height + marginTop;
+
+        // Draw the grey box (fill and border)
+        ctx.fillStyle = "rgba(200, 200, 200, 0.2)";
+        ctx.fillRect(greyX, greyY, greyBoxWidth, greyBoxHeight);
+        ctx.strokeStyle = "black";
+        ctx.strokeRect(greyX, greyY, greyBoxWidth, greyBoxHeight);
+
+        // Generate random objects inside the grey box (only once per phase)
+        if (!phase.randomObjects) {
+          phase.randomObjects = [];
+          if (phase.title === "L1 Trigger") {
+            // For the binary case, add scattered dots
+            const numDots = 30;
+            for (let i = 0; i < numDots; i++) {
+              phase.randomObjects.push({
+                type: "dot",
+                x: Math.random() * greyBoxWidth,
+                y: Math.random() * greyBoxHeight,
+                radius: 1 + Math.random() * 2
+              });
+            }
+          } else if (phase.title === "HLT") {
+            // For HLT, add random lines (tracks)
+            const numLines = 10;
+            for (let i = 0; i < numLines; i++) {
+              phase.randomObjects.push({
+                type: "line",
+                x1: Math.random() * greyBoxWidth,
+                y1: Math.random() * greyBoxHeight,
+                x2: Math.random() * greyBoxWidth,
+                y2: Math.random() * greyBoxHeight
+              });
+            }
+          } else if (phase.title === "Offline Processing") {
+            // For Offline Processing, add random recon objects (larger dots with various labels)
+            const numRecon = 8;
+            const reconLabels = ["muon jet", "electron", "Higgs", "photon", "tau"];
+            for (let i = 0; i < numRecon; i++) {
+              phase.randomObjects.push({
+                type: "recon",
+                x: Math.random() * greyBoxWidth,
+                y: Math.random() * greyBoxHeight,
+                radius: 5 + Math.random() * 3,  // larger dots
+                label: reconLabels[Math.floor(Math.random() * reconLabels.length)]
+              });
+            }
+          }
+        }
+
+        // Draw the random objects inside the grey box
+        phase.randomObjects.forEach(obj => {
+          if (obj.type === "dot") {
+            ctx.fillStyle = "black";
+            ctx.beginPath();
+            ctx.arc(greyX + obj.x, greyY + obj.y, obj.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.closePath();
+          } else if (obj.type === "line") {
+            ctx.strokeStyle = "black";
+            ctx.beginPath();
+            ctx.moveTo(greyX + obj.x1, greyY + obj.y1);
+            ctx.lineTo(greyX + obj.x2, greyY + obj.y2);
+            ctx.stroke();
+            ctx.closePath();
+          } else if (obj.type === "recon") {
+            // Draw a larger dot and its label for reconstruction objects
+            ctx.fillStyle = "rgba(0,128,0,0.5)";
+            ctx.beginPath();
+            ctx.arc(greyX + obj.x, greyY + obj.y, obj.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.closePath();
+            // Draw the label next to the dot
+            ctx.fillStyle = "black";
+            ctx.font = "10px Arial";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText(obj.label, greyX + obj.x + obj.radius + 2, greyY + obj.y);
+          }
+        });
+
+        // Draw the small-box text (original label) below the grey box
+        ctx.fillStyle = "black";
+        ctx.font = "italic 12px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        // First line: the original smallBoxText
+        ctx.fillText(phase.smallBoxText, greyX + greyBoxWidth / 2, greyY + greyBoxHeight + 10);
+        // Second line: the additional description of what this phase is doing
+        ctx.fillText(phase.phaseDesc, greyX + greyBoxWidth / 2, greyY + greyBoxHeight + 25);
+      });
+
+      // Reset text settings if needed
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+    }
+
+    function updateParticles() {
+      // Clear the entire canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw the detector image
+      if (imageLoaded) {
+        ctx.drawImage(detectorImg, 20, 90, 140, 250);
+      }
+
+      // Draw phases (colored boxes, grey boxes with random objects, and text below)
+      drawPhases();
+
+      // Update and draw particles (simulation)
+      for (let i = 0; i < particles.length; i++) {
+        let p = particles[i];
+        p.x += p.speed;
+
+        // Example condition: when a particle enters the L1 phase region, fade it out if its energy is low.
+        if (p.x >= PHASES[0].x && p.x < PHASES[0].x + PHASES[0].width) {
+          if (p.energy < 30) {
+            p.opacity -= 0.02;
+            if (p.opacity <= 0) p.speed = 0;
+          }
+        }
+
+        ctx.fillStyle = `rgba(255, 0, 0, ${p.opacity})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      requestAnimationFrame(updateParticles);
+    }
+
+    updateParticles();
+  </script>
+</body>
+</html>
