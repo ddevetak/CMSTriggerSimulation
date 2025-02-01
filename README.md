@@ -7,4 +7,4 @@ Live simulation available as url: https://ddevetak.github.io/CMSTriggerSimulatio
 Static case:
 
 
-<img src="https://github.com/ddevetak/animatedTensorFlowFit/blob/master/an.gif" width="600" height="400">
+<img src="https://github.com/ddevetak/CMSTriggerSimulation/blob/master/pic.png" width="600" height="400">
